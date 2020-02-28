@@ -3,8 +3,8 @@
 
     <!-- External layouts styles -->
     <template id="external_layout_background" inherit_id="web.external_layout_background">
-        <xpath expr="//div[@class='footer o_background_footer']" position="replace">
-            <div class="footer o_background_footer">
+        <xpath expr="//div[@t-attf-class='o_company_#{company.id}_layout footer o_background_footer']" position="replace">
+            <div t-attf-class="o_company_#{company.id}_layout footer o_background_footer">
                 <div class="text-center">
                     <ul class="list-inline">
                         <li t-if="company.phone" class="list-inline-item"><i class="fa fa-phone" role="img" aria-label="Phone" title="Phone"/> <span t-field="company.phone"/></li>

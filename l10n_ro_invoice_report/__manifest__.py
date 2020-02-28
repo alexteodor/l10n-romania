@@ -11,7 +11,7 @@
     "website": "https://odoo-community.org",
     "license": "AGPL-3",
     "installable": True,
-    "depends": ["base", "account", "l10n_ro_partner_create_by_vat"],
+    "depends": ["base", "account", "l10n_ro", "l10n_ro_partner_create_by_vat"],
     "data": [
         "views/report_templates.xml",
         "views/account_invoice_view.xml",
