@@ -55,7 +55,7 @@ class ResPartner(models.Model):
                             partner = self.search(
                                 [
                                     ("vat_number", "=", res["cui"]),
-                                    ("company_type", "=", "company"),
+                                    ("is_company", "=", True),
                                 ]
                             )
                             if partner:
