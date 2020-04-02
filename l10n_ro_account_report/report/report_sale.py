@@ -88,7 +88,7 @@ class RaportSale(models.TransientModel):
                 vals['total_vat'] =  inv1.amount_tax_signed  # or we should add them  and just compare with this
                 for line in inv1.invoice_line_ids: # or line_ids?
                     if len(line.tax_ids)>1:
-                        raise ValidationError(f'On invoice with id={inv1.id}, date={inv1.date}, number={inv1.number}, in line={line.name} you have more taxes')
+                        raise ValidationError(f'On invoice with id={inv1.id}, date={inv1.date}, number={inv1.name}, in line={line.name} you have more taxes')
                     if line.tax_exigible:    #original v8 not vat on payment
 #     tax_exigible = fields.Boolean(string='Appears in VAT report', default=True, readonly=True,
 #         help="Technical field used to mark a tax line as exigible in the vat report or not (only exigible journal items"
@@ -113,7 +113,7 @@ class RaportSale(models.TransientModel):
                             elif ' 0' in tax_line.name:
                                 vals['base_0'] += base_exig
                             else:
-                                raise ValidationError(f'On invoice with id={inv1.id}, date={inv1.date}, number={inv1.number}, in line={line.name} you some unknown taxes')
+                                raise ValidationError(f'On invoice with id={inv1.id}, date={inv1.date}, number={inv1.name}, in line={line.name} you some unknown taxes')
                             vals['base_exig'] += base_exig
                             vals['tva_exig'] += tva_exig
                         else:
