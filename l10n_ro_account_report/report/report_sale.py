@@ -21,12 +21,14 @@ class RaportSale(models.TransientModel):
              ('company_id','=', company_id[0]),
         ],order='invoice_date, name')
         
-        report_lines = self.compute_report_lines(invoices,data)
+        show_warnings = data['form']['show_warnings']
+        report_lines = self.compute_report_lines(invoices,data,show_warnings)
         
         docargs = { 
             'print_datetime':fields.datetime.now(),
             'date_from':date_from,
             'date_to':date_to,
+            'show_warnings':show_warnings,
             'user':self.env.user.name,
             'company':self.env['res.company'].browse(company_id[0]),
             'lines':report_lines,
@@ -34,7 +36,7 @@ class RaportSale(models.TransientModel):
         return docargs
     
     
-    def compute_report_lines(self,invoices,data=None):
+    def compute_report_lines(self,invoices,data,show_warnings):
         report_lines = []
         for inv1 in invoices:
             vals = {}
@@ -51,6 +53,7 @@ class RaportSale(models.TransientModel):
             vals['partner'] = inv1.invoice_partner_display_name
             vals['vat'] = inv1.partner_stored_vat
             vals['total'] = inv1.amount_total_signed
+            vals['show_warnings'] = ''
 
 # I think that vat_on_payment must exist on invoice so, l10n_ro_vat_on_payment must be modified ( and to be put also on compnay - as related to partner?)
 #             if inv1.vat_on_payment:
@@ -88,7 +91,7 @@ class RaportSale(models.TransientModel):
                 vals['total_vat'] =  inv1.amount_tax_signed  # or we should add them  and just compare with this
                 for line in inv1.invoice_line_ids: # or line_ids?
                     if len(line.tax_ids)>1:
-                        raise ValidationError(f'On invoice with id={inv1.id}, date={inv1.date}, number={inv1.name}, in line={line.name} you have more taxes')
+                        vals['show_warnings'] += 'you have more taxes; '
                     if line.tax_exigible:    #original v8 not vat on payment
 #     tax_exigible = fields.Boolean(string='Appears in VAT report', default=True, readonly=True,
 #         help="Technical field used to mark a tax line as exigible in the vat report or not (only exigible journal items"
@@ -98,22 +101,22 @@ class RaportSale(models.TransientModel):
                         base_exig = line.price_subtotal  # is not taking into consideration currency ( must take from debit/credit)
                         tva_exig = line.price_total-base_exig  # here must search some function or value in line
                         if line.tax_ids:
-                            tax_line=line.tax_ids[0]
-                            if 'INVERS' in tax_line.name.upper():
+                            tax_line_upper=line.tax_ids[0].name.upper()
+                            if 'INVERS' in tax_line_upper:
                                 vals['invers'] += 0# ???
-                            elif ' 19' in tax_line.name:
+                            elif ' 19' in tax_line_upper:
                                 vals['base_19'] += base_exig 
                                 vals['tva_19'] += tva_exig           
-                            elif ' 9' in tax_line.name:
+                            elif ' 9' in tax_line_upper:
                                 vals['base_9'] += base_exig
                                 vals['tva_9'] += tva_exig          
-                            elif ' 5' in tax_line.name:
+                            elif ' 5' in tax_line_upper:
                                 vals['base_5'] += base_exig
                                 vals['tva_5'] += tva_exig        
-                            elif ' 0' in tax_line.name:
+                            elif ' 0' in tax_line_upper:
                                 vals['base_0'] += base_exig
                             else:
-                                raise ValidationError(f'On invoice with id={inv1.id}, date={inv1.date}, number={inv1.name}, in line={line.name} you some unknown taxes')
+                                vals['show_warnings'] += f' you some unknown taxes={tax_line_upper}'
                             vals['base_exig'] += base_exig
                             vals['tva_exig'] += tva_exig
                         else:
