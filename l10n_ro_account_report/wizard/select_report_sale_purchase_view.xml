@@ -10,12 +10,14 @@
 							<field name="journal"/>
 							 <field name="date_range_id" />
 							<field name="date_from" attrs="{'readonly':[('date_range_id','!=',False)]}"/> 
-							<field name="date_to" attrs="{'readonly':[('date_range_id','!=',False)]}"/> 
+							<field name="date_to" attrs="{'readonly':[('date_range_id','!=',False)]}"/>
+							<field name="show_warnings"/> 
 						</group>
 						<div>This report in based on vat names from invoice. If you have changed them, the report can be wrong. 
 						</div>
 					<footer>
-                        <button name="print_report" string="Print" type="object" class="oe_highlight"/>
+                        <button name="print_report_html" string="Print HTML" type="object" class="oe_highlight"/>
+                        <button name="print_report" string="Download PDF" type="object" class="oe_highlight"/>
                         or
                         <button string="Cancel" class="oe_link" special="cancel"/>
                     </footer>

@@ -2,26 +2,31 @@
 <odoo>
 <template id="l10n_ro_account_report.report_sale">
     <t t-call="web.html_container">
-			<div class="page">
-                 <table class="table table-condensed  table-hover table-striped table-bordered">
-                    <thead>
-                        <tr>
-							<td colspan="3">
-							    <span t-field="company.partner_id" 
-							            t-field-options='{"widget": "contact", "fields": ["address", "name", "vat", "nrc"], "no_marker": true}'/>
-                            </td>
-                            <td colspan="30">
-							    <h2  class="text-center"><span t-esc="res_company.name"/>: Sale Journal</h2>    
-                                <p align="center">
-						<!-- 			<strong>Period: </strong><span t-raw="data['periods'][1]"/> -->
-								    <strong>Dates: </strong><span t-esc="date_from" /> - <span t-esc="date_to"/>
-								</p>
-							</td>
-							<td colspan="2"/>
-						</tr>
-                    </thead>
-                </table>
-                <table class="table table-condensed" >
+			<div class="page container-fluid" >
+                <div>
+                    <strong>Company:</strong>
+                    <span t-esc="company.name"/>
+                </div>
+                <div>
+                    <strong>Address:</strong>
+                    <address t-field="company.partner_id"
+                             t-options='{"widget": "contact", "fields": ["address","phone", "fax"], "no_marker": false, "no_tag_br": true}'/>
+                </div>
+                <div t-if="company.partner_id.vat">
+                    <strong>CIF:</strong>
+                    <span t-field="company.partner_id.vat"/>
+                </div>
+                <div t-if="company.partner_id.nrc">
+                    <strong>NRC:</strong>
+                    <span t-field="company.partner_id.nrc"/>
+                </div>
+
+                <h2>Sale journal</h2>
+                <h4>
+                    <span>From date:</span><span t-esc="date_from"/><span> to date:</span><span t-esc="date_to"/>
+                </h4>
+
+                <table class="table table-condensed table-bordered table-responsive"> <!-- table-hover table-striped  -->
                     <thead>                       
                         <tr>
                             <th colspan="1" class="text-center">Nr Crt</th>
@@ -275,8 +280,7 @@
                         </tr> -->
                     </tbody>
                  </table>
-             </div>
-
+                 </div>
 
     </t>
 </template>
@@ -285,13 +289,24 @@
             id="action_report_sale"
             string="Sale ANAF Report (PDF)"
             model="sp.report"
-            report_type="qweb-html"  
+            report_type="qweb-pdf"  
             name="l10n_ro_account_report.report_sale"
             print_report_name='rrrr'
 		 	/>
-<!--  "qweb-pdf"
-            file="l10n_ro_account_report/sale_report_anaf"
-		 	paperformat="paperformat_A3_landscape"
--->
+        <record id="action_report_sale" model="ir.actions.report">
+            <field name="paperformat_id" ref="l10n_ro_account_report.paperformat_A3_landscape"/>
+        </record>
+
+        <report
+            id="action_report_sale_html"
+            string="Sale ANAF Report (HTML)"
+            model="sp.report"
+            report_type="qweb-html"  
+            name="l10n_ro_account_report.report_sale"
+            print_report_name='rrr---htmlr'
+		 	/>
+        <record id="action_report_sale_html" model="ir.actions.report">
+            <field name="paperformat_id" ref="l10n_ro_account_report.paperformat_A3_landscape"/>
+        </record>
 
 </odoo>

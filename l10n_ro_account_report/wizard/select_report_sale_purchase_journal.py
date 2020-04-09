@@ -13,7 +13,8 @@ class SalePurchaseJournalReport(models.TransientModel):
     journal = fields.Selection( selection=[('purchase', 'Purchase =In invoices'), ('sale', 'Sale = Out invoices')],string='Journal type', default='sale',required=True)
     date_from = fields.Date("Start Date", required=True, default=(fields.Date.today()-relativedelta(months=1)).replace(day=1))
     date_to = fields.Date("End Date", required=True, default=fields.Date.today().replace(day=1)-timedelta(days=1) )     
-    date_range_id = fields.Many2one(comodel_name="date.range", string="Date range",domain="['|',('company_id','=',company_id), ('company_id','=',False)]")
+    date_range_id = fields.Many2one(comodel_name="date.range", string="Date range",domain="['|',('company_id','=',company_id), ('company_id','=',False)]",help="If you select this, the date_from ant to will be taken from this and will not be editable")
+    show_warnings = fields.Boolean(default=1,help="if you check this, you will have another column that is going to show you errors/warnings if exist")
 
     @api.onchange("date_range_id")
     def onchange_date_range_id(self):
@@ -23,13 +24,6 @@ class SalePurchaseJournalReport(models.TransientModel):
             self.date_to = self.date_range_id.date_end
 
     
-    
-    @api.onchange('period_id')
-    def _onchange_period_id(self):
-        if self.period_id:
-            self.date_from = self.period.date_from
-            self.date_to = self.period.date_from
-
     @api.constrains('date_from', 'date_to')
     def _check_dates(self):
         for fy in self:
@@ -39,7 +33,11 @@ class SalePurchaseJournalReport(models.TransientModel):
             if date_to < date_from:
                 raise ValidationError(_('The ending date must not be prior to the starting date.'))
 
-    def print_report(self):
+    def print_report_html(self):
+        res = self.print_report( html=True)
+        return res
+     
+    def print_report(self, html=False):
         self.ensure_one()
         [data] = self.read()
         datas = {
@@ -48,9 +46,9 @@ class SalePurchaseJournalReport(models.TransientModel):
             'form': data
         }
         if self.journal=='sale':
-            report_action= 'l10n_ro_account_report.action_report_sale'
+            report_action= 'l10n_ro_account_report.action_report_sale' + ('_html' if html else '')
         else:
-            report_action= 'l10n_ro_account_report.action_report_purchase'
+            report_action= 'l10n_ro_account_report.action_report_purchase' + ('_html' if html else '')
         ref=  self.env.ref(report_action)
         res =ref.report_action(docids=[], data=datas,config=False)
         return res
