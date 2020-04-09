@@ -11,9 +11,8 @@
     "website": "https://www.odooerpromania.ro",
     'category': 'Accounting/Localizations',
     'sequence': 21,
-    "depends": [
-        'account',
-        'l10n_ro',
+    "depends": ['account','l10n_ro',
+        'date_range', 
 #        'account_vat_on_payment',
 #        'l10n_ro_invoice_line_not_deductible',
     ],

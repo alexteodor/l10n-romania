@@ -19,8 +19,8 @@
                     </group>
                 </group>
                 <footer>
-                    <button name="do_close" string="Close" type="object"/>
-                    <button string="Cancel" class="oe_link" special="cancel" />
+                    <button name="do_close" string="Close" type="object" class="oe_highlight"/>
+                    <button string="Cancel" class="btn btn-secondary" special="cancel" />
                 </footer>
             </form>
         </field>

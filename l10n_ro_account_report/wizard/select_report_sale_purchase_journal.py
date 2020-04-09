@@ -8,11 +8,28 @@ class SalePurchaseJournalReport(models.TransientModel):
     _name = 'sp.report'
     _description = 'Sale Purchase Journal Report'
 
-    company_id= fields.Many2one('res.company', 'Company', required=True, default=lambda self: self.env.company)
+    company_id= fields.Many2one('res.company', 'Company', required=True, default=lambda self: self.env.company, domain="[('country_id.name','ilike','romania'),('currency_id.name','ilike','ron')]", 
+                                help="will show only companies with country name ilike romania and currency.name like ron")
     journal = fields.Selection( selection=[('purchase', 'Purchase =In invoices'), ('sale', 'Sale = Out invoices')],string='Journal type', default='sale',required=True)
     date_from = fields.Date("Start Date", required=True, default=(fields.Date.today()-relativedelta(months=1)).replace(day=1))
     date_to = fields.Date("End Date", required=True, default=fields.Date.today().replace(day=1)-timedelta(days=1) )     
+    date_range_id = fields.Many2one(comodel_name="date.range", string="Date range",domain="['|',('company_id','=',company_id), ('company_id','=',False)]")
+
+    @api.onchange("date_range_id")
+    def onchange_date_range_id(self):
+        """Handle date range change."""
+        if self.date_range_id:
+            self.date_from = self.date_range_id.date_start
+            self.date_to = self.date_range_id.date_end
+
     
+    
+    @api.onchange('period_id')
+    def _onchange_period_id(self):
+        if self.period_id:
+            self.date_from = self.period.date_from
+            self.date_to = self.period.date_from
+
     @api.constrains('date_from', 'date_to')
     def _check_dates(self):
         for fy in self:

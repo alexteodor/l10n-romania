@@ -32,10 +32,10 @@
         <field name="model">account.period.closing</field>
         <field name="type">form</field>
         <field name="arch" type="xml">
-            <form string="Closing">
+            <form string="Closing" autocomplete="off">
                 <div class="oe_editonly">
                     <label for="name"/>
-                    <h1><field name="name"/></h1>
+                    <h1><field name="name" autocomplete="off"/></h1>
                 </div>
                 <notebook>
                     <page string="Config">
