@@ -22,7 +22,7 @@ class RaportSale(models.TransientModel):
         ],order='invoice_date, name')
         
         show_warnings = data['form']['show_warnings']
-        report_lines = self.compute_report_lines(invoices,data,show_warnings)
+        report_lines,totals = self.compute_report_lines(invoices,data,show_warnings)
         
         docargs = { 
             'print_datetime':fields.datetime.now(),
@@ -32,12 +32,27 @@ class RaportSale(models.TransientModel):
             'user':self.env.user.name,
             'company':self.env['res.company'].browse(company_id[0]),
             'lines':report_lines,
+            'totals':totals,
+
         }
         return docargs
     
+    def search_what_base_in_tag_ids(self,tag_ids):
+        "input tag_ids and returns a key_name for base_value and eventualy warning"
+        if len(tag_ids)>1:
+            return ('',f'you have more tag_ids={tag_ids}')
     
     def compute_report_lines(self,invoices,data,show_warnings):
         report_lines = []
+        totals = {}
+        totals['total_base'] = totals['base_neex'] = totals['base_exig'] = totals['base_ded1'] = totals[
+            'base_ded2'] =  totals['base_19'] = totals['base_9'] = totals['base_5'] = totals['base_0'] = 0.00
+        totals['total_vat'] = totals['tva_neex'] = totals['tva_exig'] =  totals['tva_20'] = totals['tva_19'] = totals[
+            'tva_9'] = totals['tva_5'] = totals['tva_bun'] = totals['tva_serv'] = 0.00
+        totals['base_col'] = totals['tva_col'] = 0.00
+        totals['invers'] = totals['neimp'] = totals['others'] = totals['scutit1'] = totals['scutit2'] = 0.00
+        totals['total'] =totals['amount'] = 0.0
+
         for inv1 in invoices:
             vals = {}
             vals['type'] = inv1.type
@@ -54,6 +69,72 @@ class RaportSale(models.TransientModel):
             vals['vat'] = inv1.partner_stored_vat
             vals['total'] = inv1.amount_total_signed
             vals['show_warnings'] = ''
+
+            invoice_total_base = inv1.amount_untaxed_signed  # just to compare
+            invoice_total_vat =  inv1.amount_tax_signed  
+
+            for line in inv1.line_ids: # line_ids is including invoice_line_ids but has also the taxes
+                if line.account_internal_type=='other' and line.exclude_from_invoice_tab: # is the base without taxes
+                    vals['total_base'] += line.credit - line.debit # is in ron ( if it was in another currency is already converted )
+                    if not line.tag_ids:
+                        vals['show_warnings']+=f"line id={line.id} name={line.name}  is a baze, but does not have line_tag_ids and I'm not going to guess it ( maybe in future); "
+                    else:
+                        what_base,warning = search_what_base_in_tag_ids('base',line.tag_ids)
+                        if not what_base[0]:
+                            vals['show_warnings']+=what_base[1]+'; '
+                        else:
+                            vals[what_base[0]] += line.credit - line.debit
+                elif line.account_internal_type=='receivable': # is the invoice total 
+                    if line.tax_line_id:
+                        vals['show_warnings']+=f"line id={line.id} name={line.name}  has a tax but is a receivable; "
+                    else:
+                        if vals['total'] != line.debit-line.credit:
+                            vals['show_warnings'] +=f"line id={line.id} name={line.name} has value {line.debit-line.credit} != invoice_value vals['total'] }; "
+                elif line.account_internal_type=='other':  # must be taxes
+                    if not line.tax_line_id:
+                        vals['show_warnings']+=f"line id={line.id} name={line.name}  must be a tax, but does not have tax_line_id; "
+                    else:
+                        if not line.tag_ids:
+                            vals['show_warnings']+=f"line id={line.id} name={line.name}  is a tax, but does not have line_tag_ids and I'm not going to guess it ( maybe in future); "
+                        else:
+                            what_tax,warning = search_what_base_in_tag_ids('tax',line.tag_ids)
+                            if not what_tax[0]:
+                                vals['show_warnings']+=what_tax[1]+'; '
+                            else:
+                                vals[what_base[0]] += 0 - line.credit + line.debit
+                            
+                
+                if len(line.tax_ids)>1:
+                    vals['show_warnings'] += 'you have more taxes; '
+                if line.tax_exigible:    #original v8 not vat on payment
+
+
+                total_base = total_vat = 0
+                total_vat = line.price_total-total_base  # here must search some function or value in line
+                if line.tax_ids:
+                    tax_line_upper=line.tax_ids[0].name.upper()
+                    if 'INVERS' in tax_line_upper:
+                        vals['invers'] += 0# ???
+                    elif ' 19' in tax_line_upper:
+                        vals['base_19'] += total_base 
+                        vals['tva_19'] += total_vat           
+                    elif ' 9' in tax_line_upper:
+                        vals['base_9'] += total_base
+                        vals['tva_9'] += total_vat          
+                    elif ' 5' in tax_line_upper:
+                        vals['base_5'] += total_base
+                        vals['tva_5'] += total_vat        
+                    elif ' 0' in tax_line_upper:
+                        vals['base_0'] += total_base
+                    else:
+                        vals['show_warnings'] += f' you some unknown taxes={tax_line_upper}'
+                    vals['total_base'] += total_base
+                    vals['total_vat'] += total_vat
+                else:
+                    vals['base_0'] = total_base
+                    vals['total_base'] += total_base
+
+
 
 # I think that vat_on_payment must exist on invoice so, l10n_ro_vat_on_payment must be modified ( and to be put also on compnay - as related to partner?)
 #             if inv1.vat_on_payment:
@@ -89,7 +170,7 @@ class RaportSale(models.TransientModel):
             if not inv1.fiscal_position_id or (inv1.fiscal_position_id and ('National' in inv1.fiscal_position_id.name)):
                 vals['total_base'] = inv1.amount_untaxed_signed
                 vals['total_vat'] =  inv1.amount_tax_signed  # or we should add them  and just compare with this
-                for line in inv1.invoice_line_ids: # or line_ids?
+                for line in inv1.line_ids: # line_ids is including invoice_line_ids but has also the taxes
                     if len(line.tax_ids)>1:
                         vals['show_warnings'] += 'you have more taxes; '
                     if line.tax_exigible:    #original v8 not vat on payment
@@ -97,31 +178,31 @@ class RaportSale(models.TransientModel):
 #         help="Technical field used to mark a tax line as exigible in the vat report or not (only exigible journal items"
 #              " are displayed). By default all new journal items are directly exigible, but with the feature cash_basis"
 #              " on taxes, some will become exigible only when the payment is recorded.")
-                        base_exig = tva_exig = 0
-                        base_exig = line.price_subtotal  # is not taking into consideration currency ( must take from debit/credit)
-                        tva_exig = line.price_total-base_exig  # here must search some function or value in line
+                        total_base = total_vat = 0
+                        total_base = line.price_subtotal  # is not taking into consideration currency ( must take from debit/credit)
+                        total_vat = line.price_total-total_base  # here must search some function or value in line
                         if line.tax_ids:
                             tax_line_upper=line.tax_ids[0].name.upper()
                             if 'INVERS' in tax_line_upper:
                                 vals['invers'] += 0# ???
                             elif ' 19' in tax_line_upper:
-                                vals['base_19'] += base_exig 
-                                vals['tva_19'] += tva_exig           
+                                vals['base_19'] += total_base 
+                                vals['tva_19'] += total_vat           
                             elif ' 9' in tax_line_upper:
-                                vals['base_9'] += base_exig
-                                vals['tva_9'] += tva_exig          
+                                vals['base_9'] += total_base
+                                vals['tva_9'] += total_vat          
                             elif ' 5' in tax_line_upper:
-                                vals['base_5'] += base_exig
-                                vals['tva_5'] += tva_exig        
+                                vals['base_5'] += total_base
+                                vals['tva_5'] += total_vat        
                             elif ' 0' in tax_line_upper:
-                                vals['base_0'] += base_exig
+                                vals['base_0'] += total_base
                             else:
                                 vals['show_warnings'] += f' you some unknown taxes={tax_line_upper}'
-                            vals['base_exig'] += base_exig
-                            vals['tva_exig'] += tva_exig
+                            vals['total_base'] += total_base
+                            vals['total_vat'] += total_vat
                         else:
-                            vals['base_0'] = base_exig
-                            vals['base_exig'] += base_exig
+                            vals['base_0'] = total_base
+                            vals['total_base'] += total_base
 
 #             if inv1.fiscal_position:
 #                 if inv1.tax_line:
@@ -437,4 +518,34 @@ class RaportSale(models.TransientModel):
 #                     vals1['total'] = vals1['base_col'] 
 #                     if vals1['base_col'] != 0.00:
 #                         inv.append(vals1)                              
-        return report_lines
+            totals['total_base'] += vals['total_base'] 
+            totals['base_neex'] += vals['base_neex']
+            totals['base_exig'] += vals['base_exig']
+            totals['base_ded1']+= vals['base_ded1']
+            totals['base_ded2']+= vals['base_ded2']
+            totals['base_19']+= vals['base_19']
+            totals['base_9']+= vals['base_9']
+            totals['base_5']+= vals['base_5']
+            totals['base_0']  += vals['base_0']
+                
+            totals['total_vat']+= vals['total_vat']
+            totals['tva_neex']+= vals['tva_neex']
+            totals['tva_exig']+= vals['tva_exig']
+            totals['tva_20']+= vals['tva_20']
+            totals['tva_19']+= vals['tva_19']
+            totals['tva_9'] += vals['tva_9']
+            totals['tva_5']+= vals['tva_5']
+            totals['tva_bun']+= vals['tva_bun']
+            totals['tva_serv']+= vals['tva_serv']
+            totals['base_col']+= vals['base_col']
+            totals['tva_col']+= vals['base_col']
+            
+            totals['invers']= vals['invers']
+            totals['neimp']= vals['neimp']
+            totals['others']= vals['others']
+            totals['scutit1']= vals['scutit1']
+            totals['scutit2']= vals['scutit2']
+            totals['total']= vals['total']
+
+
+        return report_lines,totals
