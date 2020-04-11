@@ -45,10 +45,7 @@ class SalePurchaseJournalReport(models.TransientModel):
             'model': 'sp.report',
             'form': data
         }
-        if self.journal=='sale':
-            report_action= 'l10n_ro_account_report.action_report_sale' + ('_html' if html else '')
-        else:
-            report_action= 'l10n_ro_account_report.action_report_purchase' + ('_html' if html else '')
+        report_action= 'l10n_ro_account_report.action_report_sale' + ('_html' if html else '')
         ref=  self.env.ref(report_action)
         res =ref.report_action(docids=[], data=datas,config=False)
         return res
