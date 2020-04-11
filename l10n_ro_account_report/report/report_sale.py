@@ -52,7 +52,7 @@ class RaportSale(models.TransientModel):
 #         account_tax_report_line_names = [(x['name'],x['parent_id']) for x in account_tax_report_lines if  x['parent_id']]
 #         return agregate_account_tax_report_line_names,account_tax_report_line_names
     
-    def compute_report_lines(self,invoices,data,show_warnings):
+    def compute_report_lines(self,invoices,data,show_warnings,report_type="sale"):
         # find all the keys for dictionary
  #       agregate_account_tax_report_line_names, account_tax_report_line_names = self.find_all_account_tax_report_line()
         posible_tags = self.env['account.account.tag'].search([('country_id','=',self.env.ref('base.ro').id)]).read(['name'])
@@ -80,13 +80,18 @@ class RaportSale(models.TransientModel):
             vals['total'] = inv1.amount_total_signed
             vals['show_warnings'] = ''
             for line in inv1.line_ids:
-                if line.account_internal_type not in ['receivable','payable']:
+                if not(line.account_id.code.startswith('411') or line.account_id.code.startswith('401')):
+                    if vals['total'] != line.credit-line.debit:
+                        vals['show_warnings']+=f"The value of invoice is {vals['total']} but accounting account {line.account_id.code} has a value of  {line.credit-line.debit}"   
+                else:
                     if not line.tag_ids or len(line.tag_ids)>1: # or if no tva put tva 0 in future
                         vals['show_warnings']+=f"line id={line.id} name={line.name}  does not have line_tag_ids or have more and I'm not going to guess it ( maybe in future); "
                     elif line.tag_ids[0].name not in vals_keys:
                         vals['show_warnings']+=f"this tag_ids={line.tag_ids[0].name} is not in  find_all_account_tax_report_line"
                     else:
                         vals[line.tag_ids[0].name] += line.credit-line.debit
+
+                    
 # put the agregated values
 #             for key,value in vals:
 #                 if type(value) is dict:
@@ -156,6 +161,13 @@ class RaportSale(models.TransientModel):
 #             totals['scutit1']= vals['scutit1']
 #             totals['scutit2']= vals['scutit2']
 #             totals['total']= vals['total']
-
-
+        #make the totals dictionary for total line of table as sum of all the integer/int values of vals
+        int_float_keys = []
+        for key,value in report_lines[0].items():
+            if (type(value) is int) or (type(value) is float):
+                int_float_keys.append(key)
+        totals = {}
+        for key in int_float_keys:
+            totals[key] = sum([x[key] for x in report_lines])
+        
         return report_lines,totals
