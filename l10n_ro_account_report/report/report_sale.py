@@ -55,7 +55,8 @@ class RaportSale(models.TransientModel):
         aggregated_dict = {'total_base':[],'total_vat':[]}  
         aggregated_dict['total_base'] = [x for x in posible_tags_just_names if 
                             ('% (deductibila)' in x) or
-                            ('+Baza TVA' in x and '%' == x[-1])   ]
+                            ('+Baza TVA' in x and '%' == x[-1]) or
+                            ('-Baza TVA' in x and '%' == x[-1])   ]
         aggregated_dict['total_vat'] = [x for x in posible_tags if 
                             ('% (TVA colectata)' in x) or
                             ('% (deductibila)' in x and 'TVA' in x)   ]

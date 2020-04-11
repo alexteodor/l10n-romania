@@ -96,7 +96,11 @@
                             <td>
                                 <span t-esc="l['vat']"/>                                     
                             </td>
-                            <td class="text-right">
+
+
+
+
+                            <td class="text-right COPY_FORM_HERE_IN_TOTAL">
                                 <span t-esc="l['total']"/>                                     
                             </td>
                             <td class="text-right">
@@ -207,82 +211,119 @@
                             
                         </tr>
                     </tbody>
-           <!--          <tfoot>
+                     <tfoot>
+						<t t-set="l" t-value="totals"/>
                        <tr style="font-weight:bold">
                             <td colspan="6" class="text-center"> Totals</td>
+
+							
                             <td class="text-right">
-                                <span t-esc="totals['total']"/>
+                                <span t-esc="l['total']"/>                                     
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['total_base']"/>    
+                                <span t-esc="l['total_base']"/>                                     
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['total_vat']"/>    
+                                <span t-esc="l['total_vat']"/>                                     
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['base_19']"/>     
+                               <t t-set="base_19"  t-value="l['+Baza TVA 19%']+l['-Baza TVA 19%']" />
+                               <span t-esc="base_19"/>                                     
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['tva_19']"/>     
+                               <t t-set="tva_19"  t-value="l['+TVA 19% (TVA colectata)']+l['-TVA 19% (TVA colectata)']" />
+                              <span t-esc="tva_19"/>                                    
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['base_9']"/>     
+                               <t t-set="base_9"  t-value="l['+Baza TVA 9%']+l['-Baza TVA 9%']" />
+                                <span t-esc="base_9"/>                                     
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['tva_9']"/>    
+                               <t t-set="tva_9"  t-value="l['+TVA 9% (TVA colectata)']+l['-TVA 9% (TVA colectata)']" />
+                                <span t-esc="tva_9"/>                                     
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['base_5']"/>     
+                                <t t-set="base_5"  t-value="l['+Baza TVA 5%']+l['-Baza TVA 5%']" />
+                                 <span t-esc="base_5"/>                                     
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['tva_5']"/>    
+                                 <t t-set="tva_5"  t-value="l['+TVA 5% (TVA colectata)']+l['-TVA 5% (TVA colectata)']" />
+                                <span t-esc="tva_5"/>                                     
                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['base_0']"/>     
-                            </td>
+                                <t t-set="base_0"  t-value="l['+Baza TVA 0%']+l['-Baza TVA 0%']" />
+                               <span t-esc="base_0"/>                             
+                             </td>
                             <td class="text-right">
-                                <span t-esc="totals['invers']"/>     
-                            </td>
-                            <td class="text-right">
-                                <span t-esc="0.00"/> 
+                                <t t-set="invers"  t-value="l['+Baza TVA Taxare Inversa']+l['-Baza TVA Taxare Inversa']" />
+                               <span t-esc="invers"/>                                     
+                             </td>
+                            <td class="text-right SPECIAL_TREATMENT_CE_O_FI?">
+                                <span t-esc="0.00"/>                                     
                             </td>							
-                            <td colspan="2" />
+                            <td colspan="5">
+   <!--                              <t t-if="l['payments']">
+                                <table width="100%">
+                                    <tr t-foreach="l['payments']" t-as="pay">
+                                        <td class="text-right" width="30">
+                                            <t t-if="pay['number']!=''"><span t-esc="pay['number'].rjust(10,' ')"/></t>
+                                            <t t-if="pay['number']==''">...........</t>   
+                                        </td>
+                                        <td class="text-right" width="30">
+                                            <t t-if="pay['date']!=''"><span t-esc="pay['date']"/></t> 
+                                            <t t-if="pay['date']==''">...........</t>       
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-esc="pay['amount']"/>                                     
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-esc="pay['base_exig']"/>                                     
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-esc="pay['tva_exig']"/>                                     
+                                        </td>
+                                    </tr>
+                                </table>
+                                </t>
+    -->                         </td>  
                             <td class="text-right">
-								<span t-esc="totals['amount']"/>
-                            </td>							
-                            <td class="text-right">
-                                <span t-esc="totals['base_exig']"/>
-                            </td>							
-                            <td class="text-right">
-                                <span t-esc="totals['tva_exig']"/>
-                            </td>							
-                            <td class="text-right">
-								<span t-esc="totals['base_neex']"/> 
+                                 <t t-set="base_neex"  t-value="l['+Baza TVA Taxare Scutita - Achizitii']+l['-Baza TVA Taxare Scutita - Achizitii']" />
+                                 <span t-esc="base_neex"/> 
                             </td>
                             <td class="text-right">
-								<span t-esc="totals['tva_neex']"/> 
+                                 <t t-set="tva_neex"  t-value="'not_tag_ids'" />
+                                 <span t-esc="tva_neex"/>
+                             </td>
+                            <td class="text-right Intra_communitaire_services_With_deduction_rights" >
+                                 <t t-set="base_ded1"  t-value="l['+Baza TVA Taxare intracomunitara neimpozabila - Achizitii']+l['-Baza TVA Taxare intracomunitara neimpozabila - Achizitii']" />
+                                 <span t-esc="base_ded1"/> 
+                            </td>
+                            <td class="text-right Intra_communitaire_services_Without_deduction_rights">
+                                 <t t-set="base_ded2"  t-value="'not_tag_ids'" />
+                                 <span t-esc="base_ded2"/> 
                             </td>
                             <td class="text-right">
-								<span t-esc="totals['base_ded1']"/> 
+                                 <t t-set="scutit1"  t-value="'not_tag_ids'" />
+                                 <span t-esc="scutit1"/> 
                             </td>
                             <td class="text-right">
-								<span t-esc="totals['base_ded2']"/> 
+                                 <t t-set="scutit2"  t-value="'not_tag_ids'" />
+                                 <span t-esc="scutit2"/> 
                             </td>
                             <td class="text-right">
-								<span t-esc="totals['scutit1']"/> 
+                                <t t-set="others"  t-value="'not_tag_ids'" />
+                                 <span t-esc="others"/> 
                             </td>
                             <td class="text-right">
-								<span t-esc="totals['scutit2']"/> 
+                                <t t-set="base_col"  t-value="'not_tag_ids'" />
+                                 <span t-esc="base_col"/> 
                             </td>
                             <td class="text-right">
-								<span t-esc="totals['others']"/> 
-                            </td>
-                            <td class="text-right">
-								<span t-esc="totals['base_col']"/>
-                            </td>
-                            <td class="text-right">
-								<span t-esc="totals['tva_col']"/> 
+                                <t t-set="tva_col"  t-value="'not_tag_ids'" />
+                                <span t-esc="tva_col"/> 
                             </td>   
+
+
                         </tr> 
                     </tfoot>
  -->                 </table>
